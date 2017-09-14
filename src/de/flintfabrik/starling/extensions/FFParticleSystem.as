@@ -25,7 +25,10 @@ package de.flintfabrik.starling.extensions
 	import flash.geom.Matrix3D;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
-	import starling.animation.IAnimatable;
+
+import plexonic.stage3d.PlexoJuggler;
+
+import starling.animation.IAnimatable;
 	import starling.animation.Juggler;
 	import starling.core.Starling;
 	import starling.display.BlendMode;
@@ -114,8 +117,8 @@ package de.flintfabrik.starling.extensions
 		 * @see #automaticJugglerManagement
 		 * @see #juggler()
 		 */
-		public static var defaultJuggler:Juggler = Starling.juggler;
-		private var __juggler:Juggler = FFParticleSystem.defaultJuggler;
+		public static var defaultJuggler:PlexoJuggler = Starling.juggler;
+		private var __juggler:PlexoJuggler = FFParticleSystem.defaultJuggler;
 		
 		private var __batched:Boolean = false;
 		private var __bounds:Rectangle;
@@ -957,7 +960,7 @@ package de.flintfabrik.starling.extensions
 					resultRect.x = $helperPoint.x;
 					resultRect.y = $helperPoint.y;
 					MatrixUtil.transformCoords($helperMatrix, __bounds.width, __bounds.height, $helperPoint);
-					resultRect.width = $helperPoint.x
+					resultRect.width = $helperPoint.x;
 					resultRect.height = $helperPoint.y;
 				}
 				else if (stage)
@@ -2467,12 +2470,12 @@ package de.flintfabrik.starling.extensions
 		 * is active.
 		 * @see #automaticJugglerManagement
 		 */
-		public function get juggler():Juggler
+		public function get juggler():PlexoJuggler
 		{
 			return __juggler;
 		}
 		
-		public function set juggler(value:Juggler):void
+		public function set juggler(value:PlexoJuggler):void
 		{
 			// Not null and different required
 			if (value == null || value == __juggler)
