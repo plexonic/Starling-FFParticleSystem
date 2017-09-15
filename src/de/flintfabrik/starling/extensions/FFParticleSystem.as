@@ -29,7 +29,6 @@ package de.flintfabrik.starling.extensions
 import plexonic.stage3d.PlexoJuggler;
 
 import starling.animation.IAnimatable;
-	import starling.animation.Juggler;
 	import starling.core.Starling;
 	import starling.display.BlendMode;
 	import starling.display.DisplayObject;
