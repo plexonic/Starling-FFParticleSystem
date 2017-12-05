@@ -10,7 +10,6 @@
 
 package de.flintfabrik.starling.extensions.FFParticleSystem.rendering {
 import de.flintfabrik.starling.extensions.FFParticleSystem;
-import de.flintfabrik.starling.extensions.FFParticleSystem.*;
 import de.flintfabrik.starling.extensions.FFParticleSystem.Frame;
 import de.flintfabrik.starling.extensions.FFParticleSystem.Particle;
 import de.flintfabrik.starling.extensions.FFParticleSystem.core.ffparticlesystem_internal;
@@ -24,11 +23,15 @@ import flash.display3D.VertexBuffer3D;
 import flash.system.ApplicationDomain;
 import flash.utils.ByteArray;
 
+import plexonic.memory.FullFastByteArray;
+
 import starling.core.Starling;
 import starling.errors.MissingContextError;
 import starling.rendering.FilterEffect;
 import starling.rendering.Program;
 import starling.utils.RenderUtil;
+
+import avm2.intrinsics.memory.sf32;
 
 use namespace ffparticlesystem_internal;
 
@@ -66,7 +69,7 @@ public class FFParticleEffect extends FilterEffect {
     public var testParticleAlpha:Boolean = true;
     protected var _alpha:Number;
     private var __maxCapacity:int;
-    private var __rawData:Vector.<Number> = new Vector.<Number>(0, true);
+    private var _fastRawData:FullFastByteArray = FullFastByteArray.create(0);
 
     /** Creates a new FFParticleEffect instance. */
     public function FFParticleEffect() {
@@ -101,7 +104,7 @@ public class FFParticleEffect extends FilterEffect {
 
         $vertexBufferIdx = ++$vertexBufferIdx % $numberOfVertexBuffers;
         var vertexBuffer:VertexBuffer3D = $vertexBuffers[$vertexBufferIdx];
-        vertexBuffer.uploadFromVector(__rawData, 0, Math.min($bufferSize, numParticles) * 4);
+        vertexBuffer.uploadFromByteArray(_fastRawData.heap, _fastRawData.offset, 0, Math.min($bufferSize, numParticles) * 4);
         context.setVertexBufferAt(0, vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
         context.setVertexBufferAt(1, vertexBuffer, 2, Context3DVertexBufferFormat.FLOAT_2);
         context.setVertexBufferAt(2, vertexBuffer, 4, Context3DVertexBufferFormat.FLOAT_4);
@@ -165,8 +168,8 @@ public class FFParticleEffect extends FilterEffect {
         var sinY:Number;
         var position:uint;
         var particlesWritten:int = -1;
-        __rawData.fixed = false;
-
+        var fastRawDataLengh:int = Math.max((offset + numParticles) * 128, _fastRawData.length);
+        _fastRawData.length =fastRawDataLengh;
         for (var i:int = 0; i < numParticles; ++i) {
             particle = particles[i];
 
@@ -204,84 +207,96 @@ public class FFParticleEffect extends FilterEffect {
                 sinX = sin * xOffset;
                 sinY = sin * yOffset;
 
-                position = vertexID << 3; // * ELEMENTS_PER_VERTEX
-                __rawData[position] = x - cosX + sinY;
-                __rawData[++position] = y - sinX - cosY;
-                __rawData[++position] = frameDimensions.textureX;
-                __rawData[++position] = frameDimensions.textureY;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                var heapAddres:int = _fastRawData.getHeapAddress((vertexID << 5));
 
-                __rawData[++position] = x + cosX + sinY;
-                __rawData[++position] = y + sinX - cosY;
-                __rawData[++position] = frameDimensions.textureWidth;
-                __rawData[++position] = frameDimensions.textureY;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(x - cosX + sinY, heapAddres);
+                sf32(y - sinX - cosY, heapAddres + 4);
+                sf32(frameDimensions.textureX, heapAddres + 8);
+                sf32(frameDimensions.textureY, heapAddres + 12);
 
-                __rawData[++position] = x - cosX - sinY;
-                __rawData[++position] = y - sinX + cosY;
-                __rawData[++position] = frameDimensions.textureX;
-                __rawData[++position] = frameDimensions.textureHeight;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(red, heapAddres + 16);
+                sf32(green, heapAddres + 20);
+                sf32(blue, heapAddres + 24);
+                sf32(particleAlpha, heapAddres + 28);
 
-                __rawData[++position] = x + cosX - sinY;
-                __rawData[++position] = y + sinX + cosY;
-                __rawData[++position] = frameDimensions.textureWidth;
-                __rawData[++position] = frameDimensions.textureHeight;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(x + cosX + sinY, heapAddres + 32);
+                sf32(y + sinX - cosY, heapAddres + 36);
+                sf32(frameDimensions.textureWidth, heapAddres + 40);
+                sf32(frameDimensions.textureY, heapAddres + 44);
+
+                sf32(red, heapAddres + 48);
+                sf32(green, heapAddres + 52);
+                sf32(blue, heapAddres + 56);
+                sf32(particleAlpha, heapAddres + 60);
+
+                sf32(x - cosX - sinY, heapAddres + 64);
+                sf32(y - sinX + cosY, heapAddres + 68);
+                sf32(frameDimensions.textureX, heapAddres + 72);
+                sf32(frameDimensions.textureHeight, heapAddres + 76);
+
+                sf32(red, heapAddres + 80);
+                sf32(green, heapAddres + 84);
+                sf32(blue, heapAddres + 88);
+                sf32(particleAlpha, heapAddres + 92);
+
+                sf32(x + cosX - sinY, heapAddres + 96);
+                sf32(y + sinX + cosY, heapAddres + 100);
+                sf32(frameDimensions.textureWidth, heapAddres + 104);
+                sf32(frameDimensions.textureHeight, heapAddres + 108);
+
+                sf32(red, heapAddres + 112);
+                sf32(green, heapAddres + 116);
+                sf32(blue, heapAddres + 120);
+                sf32(particleAlpha, heapAddres + 124);
+
             }
             else {
-                position = vertexID << 3; // * ELEMENTS_PER_VERTEX
-                __rawData[position] = x - xOffset;
-                __rawData[++position] = y - yOffset;
-                __rawData[++position] = frameDimensions.textureX;
-                __rawData[++position] = frameDimensions.textureY;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                var heapAddres:int = _fastRawData.getHeapAddress((vertexID << 5));
+                sf32(x - xOffset, heapAddres);
+                sf32(y - yOffset, heapAddres + 4);
+                sf32(frameDimensions.textureX, heapAddres + 8);
+                sf32(frameDimensions.textureY, heapAddres + 12);
 
-                __rawData[++position] = x + xOffset;
-                __rawData[++position] = y - yOffset;
-                __rawData[++position] = frameDimensions.textureWidth;
-                __rawData[++position] = frameDimensions.textureY;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(red, heapAddres + 16);
+                sf32(green, heapAddres + 20);
+                sf32(blue, heapAddres + 24);
+                sf32(particleAlpha, heapAddres + 28);
 
-                __rawData[++position] = x - xOffset;
-                __rawData[++position] = y + yOffset;
-                __rawData[++position] = frameDimensions.textureX;
-                __rawData[++position] = frameDimensions.textureHeight;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(x + xOffset, heapAddres + 32);
+                sf32(y - yOffset, heapAddres + 36);
+                sf32(frameDimensions.textureWidth, heapAddres + 40);
+                sf32(frameDimensions.textureY, heapAddres + 44);
 
-                __rawData[++position] = x + xOffset;
-                __rawData[++position] = y + yOffset;
-                __rawData[++position] = frameDimensions.textureWidth;
-                __rawData[++position] = frameDimensions.textureHeight;
-                __rawData[++position] = red;
-                __rawData[++position] = green;
-                __rawData[++position] = blue;
-                __rawData[++position] = particleAlpha;
+                sf32(red, heapAddres + 48);
+                sf32(green, heapAddres + 52);
+                sf32(blue, heapAddres + 56);
+                sf32(particleAlpha, heapAddres + 60);
+
+                sf32(x - xOffset, heapAddres + 64);
+                sf32(y + yOffset, heapAddres + 68);
+                sf32(frameDimensions.textureX, heapAddres + 72);
+                sf32(frameDimensions.textureHeight, heapAddres + 76);
+
+                sf32(red, heapAddres + 80);
+                sf32(green, heapAddres + 84);
+                sf32(blue, heapAddres + 88);
+                sf32(particleAlpha, heapAddres + 92);
+
+                sf32(x + xOffset, heapAddres + 96);
+                sf32(y + yOffset, heapAddres + 100);
+                sf32(frameDimensions.textureWidth, heapAddres + 104);
+                sf32(frameDimensions.textureHeight, heapAddres + 108);
+
+                sf32(red, heapAddres + 112);
+                sf32(green, heapAddres + 116);
+                sf32(blue, heapAddres + 120);
+                sf32(particleAlpha, heapAddres + 124);
             }
         }
 
-        __rawData.fixed = true;
+        if (particlesWritten >= 0) {
+            _fastRawData.length = Math.max((offset + particlesWritten + 1) * 128, Math.max((offset + numParticles) * 128, fastRawDataLengh));
+        }
         return ++particlesWritten;
     }
 
@@ -408,16 +423,12 @@ public class FFParticleEffect extends FilterEffect {
         var newCapacity:int = Math.min(__maxCapacity, capacity + byAmount);
 
         if (oldCapacity < newCapacity) {
-            __rawData.fixed = false;
-            __rawData.length = newCapacity * ELEMENTS_PER_PARTICLE;
-            __rawData.fixed = true;
+            _fastRawData.length = newCapacity * ELEMENTS_PER_PARTICLE * 4;
         }
     }
 
     public function clearData():void {
-        __rawData.fixed = false;
-        __rawData.length = 0;
-        __rawData.fixed = true;
+        _fastRawData.length = 0;
     }
 
     /**
@@ -425,7 +436,7 @@ public class FFParticleEffect extends FilterEffect {
      */
 
     public function get capacity():int {
-        return __rawData ? (__rawData.length / ELEMENTS_PER_PARTICLE) : 0;
+        return _fastRawData ? (_fastRawData.length / ELEMENTS_PER_PARTICLE) / 4 : 0;
     }
 
     /**
