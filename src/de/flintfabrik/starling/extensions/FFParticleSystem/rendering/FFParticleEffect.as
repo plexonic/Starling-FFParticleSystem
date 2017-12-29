@@ -23,7 +23,7 @@ import flash.display3D.VertexBuffer3D;
 import flash.system.ApplicationDomain;
 import flash.utils.ByteArray;
 
-import plexonic.memory.FullFastByteArray;
+import plexonic.memory.FastByteArray;
 
 import starling.core.Starling;
 import starling.errors.MissingContextError;
@@ -66,10 +66,12 @@ public class FFParticleEffect extends FilterEffect {
     private static var $renderAlpha:Vector.<Number> = new Vector.<Number>(4, true);
     private static var $instances:Vector.<FFParticleSystem> = new Vector.<FFParticleSystem>(0, false);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public var testParticleAlpha:Boolean = true;
     protected var _alpha:Number;
     private var __maxCapacity:int;
-    private var _fastRawData:FullFastByteArray = FullFastByteArray.create(0);
+    private var _fastRawData:FastByteArray = FastByteArray.create(0);
 
     /** Creates a new FFParticleEffect instance. */
     public function FFParticleEffect() {
@@ -166,10 +168,11 @@ public class FFParticleEffect extends FilterEffect {
         var cosY:Number;
         var sinX:Number;
         var sinY:Number;
-        var position:uint;
         var particlesWritten:int = -1;
         var fastRawDataLengh:int = Math.max((offset + numParticles) * 128, _fastRawData.length);
-        _fastRawData.length =fastRawDataLengh;
+
+        _fastRawData.length = fastRawDataLengh;
+
         for (var i:int = 0; i < numParticles; ++i) {
             particle = particles[i];
 
@@ -198,6 +201,8 @@ public class FFParticleEffect extends FilterEffect {
             xOffset = frameDimensions.particleHalfWidth * particle.scale * particle.spawnFactor;
             yOffset = frameDimensions.particleHalfHeight * particle.scale * particle.spawnFactor;
 
+            var heapAddress:int;
+
             if (rotation) {
                 angle = (rotation * 325.94932345220164765467394738691) & 2047;
                 cos = FFPS_LUT.cos[angle];
@@ -207,90 +212,90 @@ public class FFParticleEffect extends FilterEffect {
                 sinX = sin * xOffset;
                 sinY = sin * yOffset;
 
-                var heapAddres:int = _fastRawData.getHeapAddress((vertexID << 5));
+                heapAddress = _fastRawData.getHeapAddress((vertexID << 5));
 
-                sf32(x - cosX + sinY, heapAddres);
-                sf32(y - sinX - cosY, heapAddres + 4);
-                sf32(frameDimensions.textureX, heapAddres + 8);
-                sf32(frameDimensions.textureY, heapAddres + 12);
+                sf32(x - cosX + sinY, heapAddress);
+                sf32(y - sinX - cosY, heapAddress + 4);
+                sf32(frameDimensions.textureX, heapAddress + 8);
+                sf32(frameDimensions.textureY, heapAddress + 12);
 
-                sf32(red, heapAddres + 16);
-                sf32(green, heapAddres + 20);
-                sf32(blue, heapAddres + 24);
-                sf32(particleAlpha, heapAddres + 28);
+                sf32(red, heapAddress + 16);
+                sf32(green, heapAddress + 20);
+                sf32(blue, heapAddress + 24);
+                sf32(particleAlpha, heapAddress + 28);
 
-                sf32(x + cosX + sinY, heapAddres + 32);
-                sf32(y + sinX - cosY, heapAddres + 36);
-                sf32(frameDimensions.textureWidth, heapAddres + 40);
-                sf32(frameDimensions.textureY, heapAddres + 44);
+                sf32(x + cosX + sinY, heapAddress + 32);
+                sf32(y + sinX - cosY, heapAddress + 36);
+                sf32(frameDimensions.textureWidth, heapAddress + 40);
+                sf32(frameDimensions.textureY, heapAddress + 44);
 
-                sf32(red, heapAddres + 48);
-                sf32(green, heapAddres + 52);
-                sf32(blue, heapAddres + 56);
-                sf32(particleAlpha, heapAddres + 60);
+                sf32(red, heapAddress + 48);
+                sf32(green, heapAddress + 52);
+                sf32(blue, heapAddress + 56);
+                sf32(particleAlpha, heapAddress + 60);
 
-                sf32(x - cosX - sinY, heapAddres + 64);
-                sf32(y - sinX + cosY, heapAddres + 68);
-                sf32(frameDimensions.textureX, heapAddres + 72);
-                sf32(frameDimensions.textureHeight, heapAddres + 76);
+                sf32(x - cosX - sinY, heapAddress + 64);
+                sf32(y - sinX + cosY, heapAddress + 68);
+                sf32(frameDimensions.textureX, heapAddress + 72);
+                sf32(frameDimensions.textureHeight, heapAddress + 76);
 
-                sf32(red, heapAddres + 80);
-                sf32(green, heapAddres + 84);
-                sf32(blue, heapAddres + 88);
-                sf32(particleAlpha, heapAddres + 92);
+                sf32(red, heapAddress + 80);
+                sf32(green, heapAddress + 84);
+                sf32(blue, heapAddress + 88);
+                sf32(particleAlpha, heapAddress + 92);
 
-                sf32(x + cosX - sinY, heapAddres + 96);
-                sf32(y + sinX + cosY, heapAddres + 100);
-                sf32(frameDimensions.textureWidth, heapAddres + 104);
-                sf32(frameDimensions.textureHeight, heapAddres + 108);
+                sf32(x + cosX - sinY, heapAddress + 96);
+                sf32(y + sinX + cosY, heapAddress + 100);
+                sf32(frameDimensions.textureWidth, heapAddress + 104);
+                sf32(frameDimensions.textureHeight, heapAddress + 108);
 
-                sf32(red, heapAddres + 112);
-                sf32(green, heapAddres + 116);
-                sf32(blue, heapAddres + 120);
-                sf32(particleAlpha, heapAddres + 124);
+                sf32(red, heapAddress + 112);
+                sf32(green, heapAddress + 116);
+                sf32(blue, heapAddress + 120);
+                sf32(particleAlpha, heapAddress + 124);
 
             }
             else {
-                var heapAddres:int = _fastRawData.getHeapAddress((vertexID << 5));
-                sf32(x - xOffset, heapAddres);
-                sf32(y - yOffset, heapAddres + 4);
-                sf32(frameDimensions.textureX, heapAddres + 8);
-                sf32(frameDimensions.textureY, heapAddres + 12);
+                heapAddress = _fastRawData.getHeapAddress((vertexID << 5));
+                sf32(x - xOffset, heapAddress);
+                sf32(y - yOffset, heapAddress + 4);
+                sf32(frameDimensions.textureX, heapAddress + 8);
+                sf32(frameDimensions.textureY, heapAddress + 12);
 
-                sf32(red, heapAddres + 16);
-                sf32(green, heapAddres + 20);
-                sf32(blue, heapAddres + 24);
-                sf32(particleAlpha, heapAddres + 28);
+                sf32(red, heapAddress + 16);
+                sf32(green, heapAddress + 20);
+                sf32(blue, heapAddress + 24);
+                sf32(particleAlpha, heapAddress + 28);
 
-                sf32(x + xOffset, heapAddres + 32);
-                sf32(y - yOffset, heapAddres + 36);
-                sf32(frameDimensions.textureWidth, heapAddres + 40);
-                sf32(frameDimensions.textureY, heapAddres + 44);
+                sf32(x + xOffset, heapAddress + 32);
+                sf32(y - yOffset, heapAddress + 36);
+                sf32(frameDimensions.textureWidth, heapAddress + 40);
+                sf32(frameDimensions.textureY, heapAddress + 44);
 
-                sf32(red, heapAddres + 48);
-                sf32(green, heapAddres + 52);
-                sf32(blue, heapAddres + 56);
-                sf32(particleAlpha, heapAddres + 60);
+                sf32(red, heapAddress + 48);
+                sf32(green, heapAddress + 52);
+                sf32(blue, heapAddress + 56);
+                sf32(particleAlpha, heapAddress + 60);
 
-                sf32(x - xOffset, heapAddres + 64);
-                sf32(y + yOffset, heapAddres + 68);
-                sf32(frameDimensions.textureX, heapAddres + 72);
-                sf32(frameDimensions.textureHeight, heapAddres + 76);
+                sf32(x - xOffset, heapAddress + 64);
+                sf32(y + yOffset, heapAddress + 68);
+                sf32(frameDimensions.textureX, heapAddress + 72);
+                sf32(frameDimensions.textureHeight, heapAddress + 76);
 
-                sf32(red, heapAddres + 80);
-                sf32(green, heapAddres + 84);
-                sf32(blue, heapAddres + 88);
-                sf32(particleAlpha, heapAddres + 92);
+                sf32(red, heapAddress + 80);
+                sf32(green, heapAddress + 84);
+                sf32(blue, heapAddress + 88);
+                sf32(particleAlpha, heapAddress + 92);
 
-                sf32(x + xOffset, heapAddres + 96);
-                sf32(y + yOffset, heapAddres + 100);
-                sf32(frameDimensions.textureWidth, heapAddres + 104);
-                sf32(frameDimensions.textureHeight, heapAddres + 108);
+                sf32(x + xOffset, heapAddress + 96);
+                sf32(y + yOffset, heapAddress + 100);
+                sf32(frameDimensions.textureWidth, heapAddress + 104);
+                sf32(frameDimensions.textureHeight, heapAddress + 108);
 
-                sf32(red, heapAddres + 112);
-                sf32(green, heapAddres + 116);
-                sf32(blue, heapAddres + 120);
-                sf32(particleAlpha, heapAddres + 124);
+                sf32(red, heapAddress + 112);
+                sf32(green, heapAddress + 116);
+                sf32(blue, heapAddress + 120);
+                sf32(particleAlpha, heapAddress + 124);
             }
         }
 
@@ -319,34 +324,43 @@ public class FFParticleEffect extends FilterEffect {
         if (bufferSize > MAX_CAPACITY) {
             bufferSize = MAX_CAPACITY;
             trace("Warning: bufferSize exceeds the limit and is set to it's maximum value (16383)");
-        }
-        else if (bufferSize <= 0) {
+        } else if (bufferSize <= 0) {
             bufferSize = MAX_CAPACITY;
             trace("Warning: bufferSize can't be lower than 1 and is set to it's maximum value (16383)");
         }
+
         $bufferSize = bufferSize;
 
         if (numberOfBuffers)
             $numberOfVertexBuffers = numberOfBuffers;
 
-        if ($instances)
-            for (var i:int = 0; i < $instances.length; ++i)
+        if ($instances) {
+            for (var i:int = 0; i < $instances.length; ++i) {
                 $instances[i].dispose();
+            }
+        }
 
-        if ($vertexBuffers)
-            for (i = 0; i < $vertexBuffers.length; ++i)
+        if ($vertexBuffers) {
+            for (i = 0; i < $vertexBuffers.length; ++i) {
                 $vertexBuffers[i].dispose();
+            }
+        }
 
-        if ($indexBuffer)
+        if ($indexBuffer) {
             $indexBuffer.dispose();
+        }
 
         var context:Context3D = Starling.context;
-        if (context == null)
-            throw new MissingContextError();
-        if (context.driverInfo == "Disposed")
-            return;
 
-        $vertexBuffers = new Vector.<VertexBuffer3D>();
+        if (context == null) {
+            throw new MissingContextError();
+        }
+
+        if (context.driverInfo == "Disposed") {
+            return;
+        }
+
+        $vertexBuffers = new <VertexBuffer3D>[];
         $vertexBufferIdx = -1;
 
         if (ApplicationDomain.currentDomain.hasDefinition("flash.display3D.Context3DBufferUsage")) {
@@ -368,7 +382,7 @@ public class FFParticleEffect extends FilterEffect {
         zeroBytes.length = 0;
 
         if (!$indices) {
-            $indices = new Vector.<uint>();
+            $indices = new <uint>[];
             var numVertices:int = 0;
             var indexPosition:int = -1;
             for (i = 0; i < MAX_CAPACITY; ++i) {
